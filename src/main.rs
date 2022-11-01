@@ -1,10 +1,11 @@
-mod settings;
 mod redis;
+mod settings;
+mod task_repository;
 
 use crate::settings::{Settings, SETTINGS};
 
 #[tokio::main]
-async fn main() -> Result<(),Box<dyn std::error::Error>> {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let settings = Settings::init().unwrap();
     SETTINGS.set(settings).unwrap();
 

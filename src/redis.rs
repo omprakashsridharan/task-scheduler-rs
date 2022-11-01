@@ -1,6 +1,7 @@
 use redis::{AsyncCommands, Client, RedisError, RedisResult};
+use testcontainers::{clients, images::redis::Redis, Container};
 
-struct RedisHelper {
+pub struct RedisHelper {
     client: Client,
 }
 
@@ -13,6 +14,17 @@ impl RedisHelper {
     pub async fn set(&self, key: String, value: String) -> Result<(), RedisError> {
         let mut connection = self.client.get_async_connection().await?;
         connection.set(key, value).await?;
+        Ok(())
+    }
+
+    pub async fn set_with_expiry(
+        &self,
+        key: String,
+        value: String,
+        ttl_in_seconds: usize,
+    ) -> Result<(), RedisError> {
+        let mut connection = self.client.get_async_connection().await?;
+        connection.set_ex(key, value, ttl_in_seconds).await?;
         Ok(())
     }
 
@@ -32,12 +44,6 @@ impl RedisHelper {
         let mut connection = self.client.get_async_connection().await?;
         let result = connection.exists(key).await?;
         Ok(result)
-    }
-
-    pub async fn expire(&self, key: String, seconds: usize) -> Result<(), RedisError> {
-        let mut connection = self.client.get_async_connection().await?;
-        connection.expire(key, seconds).await?;
-        Ok(())
     }
 }
 
@@ -135,15 +141,15 @@ mod tests {
         let redis_helper_result = RedisHelper::new(format!("redis://127.0.0.1:{}", host_port));
         assert_eq!(redis_helper_result.is_ok(), true);
         if let Ok(redis_helper) = redis_helper_result {
+            const TIME_TO_SLEEP: u64 = 2;
             let set_result = redis_helper
-                .set("KEY".to_string(), "VALUE".to_string())
+                .set_with_expiry(
+                    "KEY".to_string(),
+                    "VALUE".to_string(),
+                    TIME_TO_SLEEP as usize,
+                )
                 .await;
             assert_eq!(set_result.is_ok(), true);
-            const TIME_TO_SLEEP: u64 = 2;
-            redis_helper
-                .expire("KEY".to_string(), TIME_TO_SLEEP as usize)
-                .await
-                .unwrap();
             tokio::time::sleep(Duration::from_secs(TIME_TO_SLEEP)).await;
             let exist_result = redis_helper.exists("KEY".to_string()).await;
             assert_eq!(exist_result, Ok(false));

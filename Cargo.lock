@@ -1012,6 +1012,7 @@ dependencies = [
 name = "task-scheduler-rs"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "config",
  "dotenv",
  "once_cell",
