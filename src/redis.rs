@@ -33,10 +33,18 @@ impl RedisHelper {
         let result = connection.exists(key).await?;
         Ok(result)
     }
+
+    pub async fn expire(&self, key: String, seconds: usize) -> Result<(), RedisError> {
+        let mut connection = self.client.get_async_connection().await?;
+        connection.expire(key, seconds).await?;
+        Ok(())
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use super::RedisHelper;
     use testcontainers::{clients, images::redis::Redis, Container};
 
@@ -119,6 +127,29 @@ mod tests {
         if let Ok(redis_helper) = redis_helper_result {
             let delete_result = redis_helper.exists("INVALID_KEY".to_string()).await;
             assert_eq!(delete_result, Ok(false));
+        }
+    }
+
+    #[tokio::test]
+    async fn key_expires_after_specified_seconds() {
+        let docker = clients::Cli::default();
+        let node: Container<Redis> = docker.run(Redis::default());
+        let host_port = node.get_host_port_ipv4(6379);
+        let redis_helper_result = RedisHelper::new(format!("redis://127.0.0.1:{}", host_port));
+        assert_eq!(redis_helper_result.is_ok(), true);
+        if let Ok(redis_helper) = redis_helper_result {
+            let set_result = redis_helper
+                .set("KEY".to_string(), "VALUE".to_string())
+                .await;
+            assert_eq!(set_result.is_ok(), true);
+            const TIME_TO_SLEEP: u64 = 2;
+            redis_helper
+                .expire("KEY".to_string(), TIME_TO_SLEEP as usize)
+                .await
+                .unwrap();
+            tokio::time::sleep(Duration::from_secs(TIME_TO_SLEEP)).await;
+            let exist_result = redis_helper.exists("KEY".to_string()).await;
+            assert_eq!(exist_result, Ok(false));
         }
     }
 }
