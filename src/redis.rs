@@ -50,9 +50,6 @@ mod tests {
 
     #[test]
     fn returns_error_result_for_invalid_redis_connection_url() {
-        let docker = clients::Cli::default();
-        let node: Container<Redis> = docker.run(Redis::default());
-        let host_port = node.get_host_port_ipv4(6379);
         let redis_helper_result = RedisHelper::new("INVALID".to_string());
         assert_eq!(redis_helper_result.is_err(), true);
     }
