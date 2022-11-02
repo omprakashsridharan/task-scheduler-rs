@@ -119,47 +119,21 @@ mod tests {
         let amqp = Amqp::new(rabbit_mq_url).await.unwrap();
         let task_type = "TASK_TYPE1".to_string();
 
-        let queue_name = task_type.clone();
-
-        let final_queue = queue_name.clone();
-        let final_exchange = format!("{}_final_exchange", queue_name.clone());
-
-        let channel = amqp
-            .get_channel(
-                vec![ExchangeDefinition {
-                    name: ShortString::from(final_exchange.clone()),
-                    kind: Some(lapin::ExchangeKind::Fanout),
-                    options: Some(ExchangeDeclareOptions::default()),
-                    arguments: Some(FieldTable::default()),
-                    bindings: vec![],
-                }],
-                vec![QueueDefinition {
-                    name: ShortString::from(final_queue.clone()),
-                    options: Some(QueueDeclareOptions::default()),
-                    arguments: Some(FieldTable::default()),
-                    bindings: vec![BindingDefinition {
-                        source: ShortString::from(final_exchange.clone()),
-                        routing_key: ShortString::from(""),
-                        arguments: FieldTable::default(),
-                    }],
-                }],
-            )
+        let producer = Producer::new(amqp.clone()).await.unwrap();
+        producer
+            .send_delayed_message_to_queue(task_type.clone(), 2000, "MESSAGE".to_string())
             .await
             .unwrap();
 
+        let channel = amqp.get_channel(vec![], vec![]).await.unwrap();
+
         let mut consumer = channel
             .basic_consume(
-                final_queue.as_str(),
+                &task_type.as_str(),
                 "",
                 BasicConsumeOptions::default(),
                 FieldTable::default(),
             )
-            .await
-            .unwrap();
-
-        let producer = Producer::new(amqp.clone()).await.unwrap();
-        producer
-            .send_delayed_message_to_queue(task_type.clone(), 2000, "MESSAGE".to_string())
             .await
             .unwrap();
 
