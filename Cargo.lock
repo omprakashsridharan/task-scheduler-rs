@@ -1625,6 +1625,7 @@ dependencies = [
  "borsh",
  "config",
  "dotenv",
+ "futures-lite",
  "lapin",
  "once_cell",
  "redis",
