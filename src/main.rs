@@ -1,3 +1,4 @@
+mod amqp;
 mod redis;
 mod settings;
 mod task_repository;
