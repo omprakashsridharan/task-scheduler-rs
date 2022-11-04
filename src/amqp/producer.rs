@@ -105,6 +105,7 @@ impl Producer {
 mod tests {
     use std::time::Duration;
 
+    use borsh::BorshDeserialize;
     use futures_lite::stream::StreamExt;
     use lapin::options::BasicConsumeOptions;
     use testcontainers::{clients, images::rabbitmq};
@@ -142,8 +143,8 @@ mod tests {
             .unwrap()
             .unwrap();
         let delivery = consumed.expect("Failed to consume delivery!");
-
-        assert_eq!(String::from_utf8(delivery.data.clone()).unwrap(), "MESSAGE");
+        let message = String::try_from_slice(&delivery.data.clone()).unwrap();
+        assert_eq!(message, "MESSAGE".to_string());
         assert_eq!(
             delivery.exchange.as_str(),
             format!("{}_final_exchange", task_type.clone())
