@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::{amqp::producer::Producer, task_repository::TaskRepository};
 
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, PartialEq, Debug)]
 pub struct Task {
     pub task_id: String,
     pub task_type: String,
@@ -72,5 +72,85 @@ where
     async fn invalidate_task(&self, task_id: String) -> Result<(), Box<dyn std::error::Error>> {
         self.task_repository.delete_task(task_id).await?;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use futures_lite::stream::StreamExt;
+    use lapin::{options::BasicConsumeOptions, types::FieldTable};
+    use std::time::Duration;
+    use testcontainers::{
+        clients,
+        images::{rabbitmq, redis::Redis},
+    };
+
+    use super::*;
+    use crate::{
+        amqp::{base::Amqp, producer::Producer},
+        redis::RedisHelper,
+        task_repository::TaskRepositoryImpl,
+    };
+    use tokio_test::task::{self as tokio_test_task};
+
+    #[tokio::test]
+    async fn test_schedule_task() {
+        let docker = clients::Cli::default();
+        let rabbit_node = docker.run(rabbitmq::RabbitMq::default());
+        let rabbit_mq_url = format!("amqp://127.0.0.1:{}", rabbit_node.get_host_port_ipv4(5672));
+        let amqp = Amqp::new(rabbit_mq_url).await.unwrap();
+
+        let producer = Producer::new(amqp.clone()).await.unwrap();
+        let redis_node = docker.run(Redis::default());
+        let host_port = redis_node.get_host_port_ipv4(6379);
+        let redis_helper = RedisHelper::new(format!("redis://127.0.0.1:{}", host_port)).unwrap();
+        let task_repository = TaskRepositoryImpl::new(redis_helper.clone());
+
+        let scheduler: Box<dyn Scheduler> =
+            Box::new(SchedulerImpl::new(producer, task_repository)) as Box<dyn Scheduler>;
+        let task_type = "SAMPLE".to_string();
+        let delay_in_milliseconds = 2000;
+        let time_to_live_in_seconds = 1;
+        let todo_task = Task::new(task_type.clone(), time_to_live_in_seconds, "test".into());
+        let task_id = scheduler
+            .schedule_task(delay_in_milliseconds, todo_task.clone())
+            .await
+            .unwrap();
+
+        tokio_test_task::spawn(async {
+            let exist_result = redis_helper.clone().exists(task_id.clone()).await;
+            assert_eq!(exist_result, Ok(true));
+            tokio::time::sleep(Duration::from_secs(time_to_live_in_seconds as u64)).await;
+
+            let exist_result = redis_helper.exists(task_id.clone()).await;
+            assert_eq!(exist_result, Ok(false));
+        })
+        .await;
+
+        tokio_test_task::spawn(async {
+            let channel = amqp.get_channel(vec![], vec![]).await.unwrap();
+
+            let mut consumer = channel
+                .basic_consume(
+                    &task_type.as_str(),
+                    "",
+                    BasicConsumeOptions::default(),
+                    FieldTable::default(),
+                )
+                .await
+                .unwrap();
+
+            let consumed = tokio::time::timeout(
+                Duration::from_millis((delay_in_milliseconds + 10) as u64),
+                consumer.next(),
+            )
+            .await
+            .unwrap()
+            .unwrap();
+            let delivery = consumed.expect("Failed to consume delivery!");
+            let obtained_task = Task::try_from_slice(&delivery.data).unwrap();
+            assert_eq!(obtained_task, todo_task);
+        })
+        .await;
     }
 }

@@ -2,10 +2,7 @@ use std::collections::BTreeMap;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use lapin::{
-    options::{
-        BasicPublishOptions, ExchangeBindOptions, ExchangeDeclareOptions, QueueBindOptions,
-        QueueDeclareOptions,
-    },
+    options::{BasicPublishOptions, ExchangeDeclareOptions, QueueDeclareOptions},
     protocol::basic::AMQPProperties,
     topology::{BindingDefinition, ExchangeDefinition, QueueDefinition},
     types::AMQPValue,
