@@ -1,26 +1,5 @@
-use borsh::{BorshDeserialize, BorshSerialize};
-use uuid::Uuid;
-
-use crate::{amqp::producer::Producer, task_repository::TaskRepository};
-
-#[derive(BorshDeserialize, BorshSerialize, Clone, PartialEq, Debug)]
-pub struct Task {
-    pub task_id: String,
-    pub task_type: String,
-    pub time_to_live_in_seconds: usize,
-    pub payload: String,
-}
-
-impl Task {
-    pub fn new(task_type: String, time_to_live_in_seconds: usize, payload: String) -> Self {
-        Self {
-            task_id: Uuid::new_v4().to_string(),
-            task_type,
-            time_to_live_in_seconds,
-            payload,
-        }
-    }
-}
+use super::{model::Task, repository::TaskRepository};
+use crate::amqp::producer::Producer;
 
 #[async_trait::async_trait]
 pub trait Scheduler {
@@ -87,7 +66,7 @@ mod tests {
     use crate::{
         amqp::{base::Amqp, consumer::Consumer, producer::Producer},
         redis::RedisHelper,
-        task_repository::TaskRepositoryImpl,
+        task::repository::TaskRepositoryImpl,
     };
     use tokio_test::task::{self as tokio_test_task};
 

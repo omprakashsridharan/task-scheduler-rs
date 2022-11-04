@@ -1,8 +1,7 @@
 mod amqp;
 mod redis;
-mod scheduler;
 mod settings;
-mod task_repository;
+mod task;
 
 use crate::settings::{Settings, SETTINGS};
 
