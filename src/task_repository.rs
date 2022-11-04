@@ -1,7 +1,7 @@
 use crate::redis::RedisHelper;
 
 #[async_trait::async_trait]
-trait TaskRepository {
+pub trait TaskRepository: Clone + Send + Sync {
     async fn create_task(
         &self,
         task_id: String,
@@ -11,6 +11,7 @@ trait TaskRepository {
     async fn is_task_valid(&self, task_id: String) -> Result<bool, Box<dyn std::error::Error>>;
 }
 
+#[derive(Clone)]
 pub struct TaskRepositoryImpl {
     redis_helper: RedisHelper,
 }

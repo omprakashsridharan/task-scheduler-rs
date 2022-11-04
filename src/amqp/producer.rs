@@ -1,5 +1,6 @@
 use std::collections::BTreeMap;
 
+use borsh::{BorshDeserialize, BorshSerialize};
 use lapin::{
     options::{
         BasicPublishOptions, ExchangeBindOptions, ExchangeDeclareOptions, QueueBindOptions,
@@ -23,11 +24,11 @@ impl Producer {
         Ok(Self { amqp })
     }
 
-    pub async fn send_delayed_message_to_queue(
+    pub async fn send_delayed_message_to_queue<T: BorshDeserialize + BorshSerialize>(
         &self,
         task_type: String,
         delay_in_milli_seconds: usize,
-        data: String,
+        data: T,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let queue_name = task_type;
         let intermediate_queue: String = format!("{}_intermediate_queue", queue_name.clone());
@@ -87,12 +88,14 @@ impl Producer {
             .await?;
         let publisher_properties = AMQPProperties::default()
             .with_expiration(ShortString::from(delay_in_milli_seconds.to_string()));
+        let mut buffer = Vec::new();
+        data.serialize(&mut buffer)?;
         channel
             .basic_publish(
                 &intermediate_exchange,
                 "",
                 BasicPublishOptions::default(),
-                data.as_bytes(),
+                &buffer,
                 publisher_properties,
             )
             .await?;

@@ -22,3 +22,4 @@ borsh = "0.9.3"
 tokio-executor-trait = "2.1.0"
 tokio-reactor-trait = "1.1.0"
 futures-lite = "1.12.0"
+uuid = { version = "1.2.1", features = ["v4", "fast-rng"] }

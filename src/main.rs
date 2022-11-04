@@ -1,5 +1,6 @@
 mod amqp;
 mod redis;
+mod scheduler;
 mod settings;
 mod task_repository;
 

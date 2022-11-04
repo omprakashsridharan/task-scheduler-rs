@@ -1,5 +1,6 @@
 use redis::{AsyncCommands, Client, RedisError, RedisResult};
 
+#[derive(Clone)]
 pub struct RedisHelper {
     client: Client,
 }
