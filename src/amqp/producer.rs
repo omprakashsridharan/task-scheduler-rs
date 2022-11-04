@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use borsh::{BorshDeserialize, BorshSerialize};
+use borsh::BorshSerialize;
 use lapin::{
     options::{BasicPublishOptions, ExchangeDeclareOptions, QueueDeclareOptions},
     protocol::basic::AMQPProperties,
@@ -21,7 +21,7 @@ impl Producer {
         Ok(Self { amqp })
     }
 
-    pub async fn send_delayed_message_to_queue<T: BorshDeserialize + BorshSerialize>(
+    pub async fn send_delayed_message_to_queue<T: BorshSerialize>(
         &self,
         task_type: String,
         delay_in_milli_seconds: usize,

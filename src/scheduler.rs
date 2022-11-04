@@ -77,8 +77,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use futures_lite::stream::StreamExt;
-    use lapin::{options::BasicConsumeOptions, types::FieldTable};
     use std::time::Duration;
     use testcontainers::{
         clients,
@@ -87,7 +85,7 @@ mod tests {
 
     use super::*;
     use crate::{
-        amqp::{base::Amqp, producer::Producer},
+        amqp::{base::Amqp, consumer::Consumer, producer::Producer},
         redis::RedisHelper,
         task_repository::TaskRepositoryImpl,
     };
@@ -101,6 +99,7 @@ mod tests {
         let amqp = Amqp::new(rabbit_mq_url).await.unwrap();
 
         let producer = Producer::new(amqp.clone()).await.unwrap();
+
         let redis_node = docker.run(Redis::default());
         let host_port = redis_node.get_host_port_ipv4(6379);
         let redis_helper = RedisHelper::new(format!("redis://127.0.0.1:{}", host_port)).unwrap();
@@ -128,27 +127,8 @@ mod tests {
         .await;
 
         tokio_test_task::spawn(async {
-            let channel = amqp.get_channel(vec![], vec![]).await.unwrap();
-
-            let mut consumer = channel
-                .basic_consume(
-                    &task_type.as_str(),
-                    "",
-                    BasicConsumeOptions::default(),
-                    FieldTable::default(),
-                )
-                .await
-                .unwrap();
-
-            let consumed = tokio::time::timeout(
-                Duration::from_millis((delay_in_milliseconds + 10) as u64),
-                consumer.next(),
-            )
-            .await
-            .unwrap()
-            .unwrap();
-            let delivery = consumed.expect("Failed to consume delivery!");
-            let obtained_task = Task::try_from_slice(&delivery.data).unwrap();
+            let consumer = Consumer::new(amqp.clone()).await.unwrap();
+            let obtained_task = consumer.consume::<Task>(task_type).await.unwrap();
             assert_eq!(obtained_task, todo_task);
         })
         .await;
