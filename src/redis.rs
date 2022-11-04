@@ -1,5 +1,4 @@
 use redis::{AsyncCommands, Client, RedisError, RedisResult};
-use testcontainers::{clients, images::redis::Redis, Container};
 
 pub struct RedisHelper {
     client: Client,
@@ -11,20 +10,18 @@ impl RedisHelper {
         Ok(Self { client })
     }
 
-    pub async fn set(&self, key: String, value: String) -> Result<(), RedisError> {
-        let mut connection = self.client.get_async_connection().await?;
-        connection.set(key, value).await?;
-        Ok(())
-    }
-
-    pub async fn set_with_expiry(
+    pub async fn set(
         &self,
         key: String,
         value: String,
-        ttl_in_seconds: usize,
+        ttl_in_seconds: Option<usize>,
     ) -> Result<(), RedisError> {
         let mut connection = self.client.get_async_connection().await?;
-        connection.set_ex(key, value, ttl_in_seconds).await?;
+        if let Some(ttl) = ttl_in_seconds {
+            connection.set_ex(key, value, ttl).await?;
+        } else {
+            connection.set(key, value).await?;
+        }
         Ok(())
     }
 
@@ -78,7 +75,7 @@ mod tests {
         assert_eq!(redis_helper_result.is_ok(), true);
         if let Ok(redis_helper) = redis_helper_result {
             let set_result = redis_helper
-                .set("KEY".to_string(), "VALUE".to_string())
+                .set("KEY".to_string(), "VALUE".to_string(), None)
                 .await;
             assert_eq!(set_result.is_ok(), true);
             let get_result = redis_helper.get("KEY".to_string()).await;
@@ -95,7 +92,7 @@ mod tests {
         assert_eq!(redis_helper_result.is_ok(), true);
         if let Ok(redis_helper) = redis_helper_result {
             let set_result = redis_helper
-                .set("KEY".to_string(), "VALUE".to_string())
+                .set("KEY".to_string(), "VALUE".to_string(), None)
                 .await;
             assert_eq!(set_result.is_ok(), true);
             let delete_result = redis_helper.delete("KEY".to_string()).await;
@@ -112,7 +109,7 @@ mod tests {
         assert_eq!(redis_helper_result.is_ok(), true);
         if let Ok(redis_helper) = redis_helper_result {
             let set_result = redis_helper
-                .set("KEY".to_string(), "VALUE".to_string())
+                .set("KEY".to_string(), "VALUE".to_string(), None)
                 .await;
             assert_eq!(set_result.is_ok(), true);
             let delete_result = redis_helper.exists("KEY".to_string()).await;
@@ -143,10 +140,10 @@ mod tests {
         if let Ok(redis_helper) = redis_helper_result {
             const TIME_TO_SLEEP: u64 = 2;
             let set_result = redis_helper
-                .set_with_expiry(
+                .set(
                     "KEY".to_string(),
                     "VALUE".to_string(),
-                    TIME_TO_SLEEP as usize,
+                    Some(TIME_TO_SLEEP as usize),
                 )
                 .await;
             assert_eq!(set_result.is_ok(), true);

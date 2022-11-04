@@ -29,7 +29,7 @@ impl TaskRepository for TaskRepositoryImpl {
         ttl_in_seconds: usize,
     ) -> Result<(), Box<dyn std::error::Error>> {
         self.redis_helper
-            .set_with_expiry(task_id, "".to_string(), ttl_in_seconds)
+            .set(task_id, "".to_string(), Some(ttl_in_seconds))
             .await?;
         Ok(())
     }
