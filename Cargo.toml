@@ -30,5 +30,4 @@ warp = "0.3.3"
 testcontainers = { git = "https://github.com/bobmcwhirter/testcontainers-rs/", branch = "expose_bollard_ctor", features = [
   "experimental",
 ] }
-bollard = { version = "0.13.0", optional = true }
 bollard-stubs = "=1.42.0-rc.3"
