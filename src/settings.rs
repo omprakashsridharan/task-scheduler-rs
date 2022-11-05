@@ -1,6 +1,6 @@
 use config::{Config, ConfigError, Environment};
-use serde::Deserialize;
 use once_cell::sync::OnceCell;
+use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct Settings {
@@ -19,13 +19,11 @@ impl Settings {
         dotenv::dotenv().ok();
         let s = Config::builder()
             .add_source(Environment::default())
-            .set_default("port",3000)?
-            .set_default("app_name","Distributed Task scheduler using RabbitMQ")?
+            .set_default("port", 3000)?
+            .set_default("app_name", "Distributed Task scheduler using RabbitMQ")?
             .build()?;
         s.try_deserialize()
     }
 }
-
-
 
 pub static SETTINGS: OnceCell<Settings> = OnceCell::new();
