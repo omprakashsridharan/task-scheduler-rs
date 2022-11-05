@@ -11,6 +11,7 @@ use lapin::{
 
 use super::base::Amqp;
 
+#[derive(Clone)]
 pub struct Consumer {
     amqp: Amqp,
 }

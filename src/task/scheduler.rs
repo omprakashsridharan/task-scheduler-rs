@@ -1,6 +1,7 @@
 use super::{model::Task, repository::TaskRepository};
 use crate::amqp::producer::Producer;
 
+#[derive(Clone)]
 pub struct SchedulerImpl<TR: TaskRepository> {
     producer: Producer,
     task_repository: TR,

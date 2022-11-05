@@ -1,6 +1,7 @@
 use super::{model::Task, repository::TaskRepository};
 use crate::amqp::consumer::Consumer;
 
+#[derive(Clone)]
 pub struct TaskConsumer<TR: TaskRepository> {
     consumer: Consumer,
     task_repository: TR,
