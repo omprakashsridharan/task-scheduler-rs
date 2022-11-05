@@ -77,7 +77,7 @@ mod tests {
 
     #[tokio::test]
     async fn results_in_error_for_invalid_rabbit_mq_error() {
-        let rabbit_mq_url = format!("INVALID");
+        let rabbit_mq_url = "INVALID".to_string();
         let amp = Amqp::new(rabbit_mq_url).await;
         assert!(amp.is_err());
     }

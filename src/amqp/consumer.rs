@@ -50,7 +50,7 @@ impl Consumer {
             .await?;
         let mut consumer = channel
             .basic_consume(
-                &task_type.as_str(),
+                &task_type,
                 "",
                 BasicConsumeOptions::default(),
                 FieldTable::default(),

@@ -131,7 +131,7 @@ mod tests {
 
         let mut consumer = channel
             .basic_consume(
-                &task_type.as_str(),
+                &task_type,
                 "",
                 BasicConsumeOptions::default(),
                 FieldTable::default(),
@@ -144,7 +144,7 @@ mod tests {
             .unwrap()
             .unwrap();
         let delivery = consumed.expect("Failed to consume delivery!");
-        let message = String::try_from_slice(&delivery.data.clone()).unwrap();
+        let message = String::try_from_slice(&delivery.data).unwrap();
         assert_eq!(message, "MESSAGE".to_string());
         assert_eq!(
             delivery.exchange.as_str(),

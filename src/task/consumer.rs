@@ -25,9 +25,9 @@ impl<TR: TaskRepository> TaskConsumer<TR> {
             .is_task_valid(task.task_id.clone())
             .await?;
         if is_task_valid {
-            return Ok(Some(task));
+            Ok(Some(task))
         } else {
-            return Ok(None);
+            Ok(None)
         }
     }
 }

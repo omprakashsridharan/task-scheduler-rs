@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use warp::reject;
 
-#[derive(BorshDeserialize, BorshSerialize, Clone, PartialEq, Debug, Deserialize, Serialize)]
+#[derive(BorshDeserialize, BorshSerialize, Clone, PartialEq, Eq, Debug, Deserialize, Serialize)]
 pub struct Task {
     pub task_id: String,
     pub task_type: String,

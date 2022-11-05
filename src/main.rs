@@ -62,9 +62,9 @@ pub async fn consume(
     let task = task_consumer.consume(cr.task_type).await.unwrap();
     if task.is_some() {
         let result = task.unwrap();
-        return Ok(warp::reply::json(&result));
+        Ok(warp::reply::json(&result))
     } else {
-        return Err(reject::custom(TaskExpired));
+        Err(reject::custom(TaskExpired))
     }
 }
 
