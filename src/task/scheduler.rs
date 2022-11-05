@@ -1,16 +1,6 @@
 use super::{model::Task, repository::TaskRepository};
 use crate::amqp::producer::Producer;
 
-#[async_trait::async_trait]
-pub trait Scheduler {
-    async fn schedule_task(
-        &self,
-        delay_in_milliseconds: usize,
-        task: Task,
-    ) -> Result<String, Box<dyn std::error::Error>>;
-    async fn invalidate_task(&self, task_id: String) -> Result<(), Box<dyn std::error::Error>>;
-}
-
 pub struct SchedulerImpl<TR: TaskRepository> {
     producer: Producer,
     task_repository: TR,
@@ -26,14 +16,8 @@ where
             task_repository,
         }
     }
-}
 
-#[async_trait::async_trait]
-impl<TR> Scheduler for SchedulerImpl<TR>
-where
-    TR: TaskRepository,
-{
-    async fn schedule_task(
+    pub async fn schedule_task(
         &self,
         delay_in_milliseconds: usize,
         task: Task,
@@ -48,7 +32,7 @@ where
             .await?;
         Ok(task_id)
     }
-    async fn invalidate_task(&self, task_id: String) -> Result<(), Box<dyn std::error::Error>> {
+    pub async fn invalidate_task(&self, task_id: String) -> Result<(), Box<dyn std::error::Error>> {
         self.task_repository.delete_task(task_id).await?;
         Ok(())
     }
@@ -84,8 +68,7 @@ mod tests {
         let redis_helper = RedisHelper::new(format!("redis://127.0.0.1:{}", host_port)).unwrap();
         let task_repository = TaskRepositoryImpl::new(redis_helper.clone());
 
-        let scheduler: Box<dyn Scheduler> =
-            Box::new(SchedulerImpl::new(producer, task_repository)) as Box<dyn Scheduler>;
+        let scheduler = SchedulerImpl::new(producer, task_repository);
         let task_type = "SAMPLE".to_string();
         let delay_in_milliseconds = 2000;
         let time_to_live_in_seconds = 1;
