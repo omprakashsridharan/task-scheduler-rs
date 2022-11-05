@@ -1,4 +1,4 @@
-use crate::redis::RedisHelper;
+use crate::redis_helper::RedisHelper;
 
 #[async_trait::async_trait]
 pub trait TaskRepository: Clone + Send + Sync {
@@ -50,7 +50,7 @@ mod tests {
 
     use testcontainers::{clients, images::redis::Redis, Container};
 
-    use crate::redis::RedisHelper;
+    use crate::redis_helper::RedisHelper;
 
     use super::{TaskRepository, TaskRepositoryImpl};
 

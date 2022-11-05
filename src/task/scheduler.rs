@@ -32,6 +32,7 @@ where
             .await?;
         Ok(task_id)
     }
+
     pub async fn invalidate_task(&self, task_id: String) -> Result<(), Box<dyn std::error::Error>> {
         self.task_repository.delete_task(task_id).await?;
         Ok(())
@@ -49,7 +50,7 @@ mod tests {
     use super::*;
     use crate::{
         amqp::{base::Amqp, consumer::Consumer, producer::Producer},
-        redis::RedisHelper,
+        redis_helper::RedisHelper,
         task::repository::TaskRepositoryImpl,
     };
     use tokio_test::task::{self as tokio_test_task};

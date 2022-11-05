@@ -26,7 +26,7 @@ impl RedisHelper {
         Ok(())
     }
 
-    pub async fn get(&self, key: String) -> Result<String, RedisError> {
+    pub async fn _get(&self, key: String) -> Result<String, RedisError> {
         let mut connection = self.client.get_async_connection().await?;
         let value: String = connection.get(key).await?;
         Ok(value)
@@ -79,7 +79,7 @@ mod tests {
                 .set("KEY".to_string(), "VALUE".to_string(), None)
                 .await;
             assert_eq!(set_result.is_ok(), true);
-            let get_result = redis_helper.get("KEY".to_string()).await;
+            let get_result = redis_helper._get("KEY".to_string()).await;
             assert_eq!(get_result, Ok("VALUE".to_string()));
         }
     }

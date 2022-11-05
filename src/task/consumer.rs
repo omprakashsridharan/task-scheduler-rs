@@ -1,8 +1,5 @@
-use std::error::Error;
-
-use crate::amqp::consumer::Consumer;
-
 use super::{model::Task, repository::TaskRepository};
+use crate::amqp::consumer::Consumer;
 
 pub struct TaskConsumer<TR: TaskRepository> {
     consumer: Consumer,
@@ -46,7 +43,7 @@ mod tests {
     use super::TaskConsumer;
     use crate::{
         amqp::{base::Amqp, consumer::Consumer, producer::Producer},
-        redis::RedisHelper,
+        redis_helper::RedisHelper,
         task::{model::Task, repository::TaskRepositoryImpl, scheduler::SchedulerImpl},
     };
     use tokio_test::task::{self as tokio_test_task};
